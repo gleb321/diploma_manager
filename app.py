@@ -19,6 +19,20 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
+bool check_token(login, password, required_role = "user"):
+    try:
+        decoded_token = jwt.decode(token, f"{login}.{password}.{jwt_key}", algorithms=["HS256"])
+        if (decoded_token["exp"] < int(time.time())):
+            raise Exception("Время действия токена истекло")
+
+        if (required_role == "admin" and decoded_token["role"] != "admin"):
+            raise Exception("Недостаточный уровень доступа")
+
+        return True
+    except Exception as ex:
+        return False
+
+
 @app.route('/auth', methods=['GET'])
 @cross_origin()
 def authorize():
@@ -46,12 +60,7 @@ def get_user_diplomas():
     try:
         login, token = request.args.get('login'), request.args.get('token')
         password, role = get_user_data(login)
-        try:
-            decoded_token = jwt.decode(token, f"{login}.{password}.{jwt_key}", algorithms=["HS256"])
-            if (decoded_token["exp"] < int(time.time())):
-                raise Exception("Время действия токена истекло")
-
-        except Exception as ex:
+        if (not check_token(login, password)):
             raise Exception("Некорректный токен")
 
         return get_diplomas(case = "user", email = login)
@@ -67,15 +76,7 @@ def get_all_diplomas():
     try:
         login, token = request.args.get('login'), request.args.get('token')
         password, role = get_user_data(login)
-        try:
-            decoded_token = jwt.decode(token, f"{login}.{password}.{jwt_key}", algorithms=["HS256"])
-            if (decoded_token["exp"] < int(time.time())):
-                raise Exception("Время действия токена истекло")
-
-            if (decoded_token["role"] != "admin"):
-                raise Exception("Недостаточный уровень доступа")
-
-        except Exception as ex:
+        if (not check_token(login, password, required_role = "admin")):
             raise Exception("Некорректный токен")
 
         return get_diplomas(case = "all")
@@ -85,22 +86,46 @@ def get_all_diplomas():
         return f"Не удалось получить информацию о дипломах:\n{ex}", 400
 
 
-@app.route('/request', methods=['GET', 'POST'])
+@app.route('/stats', methods=['GET'])
 @cross_origin()
-def get_request():
+def user_info():
     try:
         login, token = request.args.get('login'), request.args.get('token')
         password, role = get_user_data(login)
-        try:
-            decoded_token = jwt.decode(token, f"{login}.{password}.{jwt_key}", algorithms=["HS256"])
-            if (decoded_token["role"] != "admin"):
-                raise Exception("Недостаточный уровень доступа")
+        if (not check_token(login, password)):
+            raise Exception("Некорректный токен")
 
-            if (decoded_token["exp"] < int(time.time())):
-                raise Exception("Время действия токена истекло")
+        return get_user_stats(login)
+    except Exception as ex:
+        print("Не удалось получить статистику пользователя:")
+        print(ex)
+        return f"Не удалось получить статистику пользователя:\n{ex}", 400
 
-        except Exception as ex:
-            raise Exception(f"Некорректный токен")
+
+@app.route('/info', methods=['GET'])
+@cross_origin()
+def diploma_info():
+    try:
+        login, id, token = request.args.get('login'), request.args.get('id'), request.args.get('token')
+        password, role = get_user_data(login)
+        if (not check_token(login, password)):
+            raise Exception("Некорректный токен")
+
+        return get_diploma_info(login, id)
+    except Exception as ex:
+        print("Не удалось получить информацию о дипломе:")
+        print(ex)
+        return f"Не удалось получить информацию о дипломе:\n{ex}", 400
+
+
+@app.route('/request', methods=['GET', 'POST'])
+@cross_origin()
+def create_and_send_diploma():
+    try:
+        login, token = request.args.get('login'), request.args.get('token')
+        password, role = get_user_data(login)
+        if (not check_token(login, password, required_role = "admin")):
+            raise Exception("Некорректный токен")
 
         data = dict(request.get_json())
         date = datetime.now(pytz.timezone('Europe/Moscow')).date()
@@ -110,7 +135,7 @@ def get_request():
         hashcode = hashlib.sha256(string_to_hash.encode()).hexdigest()
         link = create_transaction(data["name"], data["surname"], data["course_id"], date.strftime("%d/%m/%Y"), hashcode, waves_private_key)
         create_diploma(name = data["name"], surname = data["surname"], course = data["course"], date = date.strftime("%d.%m.%Y"), link = link)
-        add_to_db((*data.values(), hashcode), "diploma")
+        add_to_db((data["email"], data["course_id"], data["portfolio"], hashcode), "diploma")
         send_file(filename = "diploma.pdf", login = gmail_login, password = gmail_password, email = data["email"])
         print("Запрос успешно обработан")
         return "Запрос успешно обработан"
@@ -122,9 +147,6 @@ def get_request():
 
 if __name__ == '__main__':
     app.run(host = host, port = port)
-
-
-
 
 
 
