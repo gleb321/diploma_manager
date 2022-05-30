@@ -19,7 +19,7 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
-bool check_token(login, password, required_role = "user"):
+def check_token(login, password, token, required_role = "user"):
     try:
         decoded_token = jwt.decode(token, f"{login}.{password}.{jwt_key}", algorithms=["HS256"])
         if (decoded_token["exp"] < int(time.time())):
@@ -60,7 +60,7 @@ def get_user_diplomas():
     try:
         login, token = request.args.get('login'), request.args.get('token')
         password, role = get_user_data(login)
-        if (not check_token(login, password)):
+        if (not check_token(login, password, token)):
             raise Exception("Некорректный токен")
 
         return get_diplomas(case = "user", email = login)
@@ -76,7 +76,7 @@ def get_all_diplomas():
     try:
         login, token = request.args.get('login'), request.args.get('token')
         password, role = get_user_data(login)
-        if (not check_token(login, password, required_role = "admin")):
+        if (not check_token(login, password, token, required_role = "admin")):
             raise Exception("Некорректный токен")
 
         return get_diplomas(case = "all")
@@ -92,7 +92,7 @@ def user_info():
     try:
         login, token = request.args.get('login'), request.args.get('token')
         password, role = get_user_data(login)
-        if (not check_token(login, password)):
+        if (not check_token(login, password, token)):
             raise Exception("Некорректный токен")
 
         return get_user_stats(login)
@@ -108,7 +108,7 @@ def diploma_info():
     try:
         login, id, token = request.args.get('login'), request.args.get('id'), request.args.get('token')
         password, role = get_user_data(login)
-        if (not check_token(login, password)):
+        if (not check_token(login, password, token)):
             raise Exception("Некорректный токен")
 
         return get_diploma_info(login, id)
@@ -124,7 +124,7 @@ def create_and_send_diploma():
     try:
         login, token = request.args.get('login'), request.args.get('token')
         password, role = get_user_data(login)
-        if (not check_token(login, password, required_role = "admin")):
+        if (not check_token(login, password, token, required_role = "admin")):
             raise Exception("Некорректный токен")
 
         data = dict(request.get_json())

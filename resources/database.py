@@ -125,7 +125,7 @@ def get_user_data(login):
     return user[2], user[3]
 
 
-get_user_stats(email):
+def get_user_stats(email):
     db.acquire()
     try:
         with sq.connect("data.db") as con:
@@ -143,10 +143,11 @@ get_user_stats(email):
 
             name, surname = user[0], user[1]
             dict_data = {"name": name, "surname": surname, "diplomas_count": cnt[0]}
+            cur.close()
             if db.locked():
                 db.release()
 
-         return str(json.dumps(dict_data))
+        return str(json.dumps(dict_data))
     except Exception as ex:
         if db.locked():
             db.release()
@@ -154,10 +155,11 @@ get_user_stats(email):
         raise ex
 
 
-get_diploma_info(email, id):
+def get_diploma_info(email, id):
     db.acquire()
     try:
         with sq.connect("data.db") as con:
+            cur = con.cursor()
             res = cur.execute("""SELECT DISTINCT
                 transactions.transaction_id,
                 transactions.date,
@@ -171,10 +173,11 @@ get_diploma_info(email, id):
                 raise Exception("Данный пользователь не проходил этот курс")
 
             dict_data = {"transaction": f'https://wavesexplorer.com/tx/{diploma[0]}', "date": diploma[1], "name": diploma[2]}
+            cur.close()
             if db.locked():
                 db.release()
 
-            return str(json.dumps(dict_data))
+        return str(json.dumps(dict_data))
     except Exception as ex:
         if db.locked():
             db.release()
