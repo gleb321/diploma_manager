@@ -9,3 +9,4 @@ faker.py
 Dockerfile
 qr.png
 __pycache__
+data.db-journal
