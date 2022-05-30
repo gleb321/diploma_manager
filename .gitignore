@@ -1,0 +1,11 @@
+config.py
+number.txt
+data.db
+.DS_Store
+diploma.pptx
+template.pptx
+waves.py
+faker.py
+Dockerfile
+qr.png
+__pycache__
