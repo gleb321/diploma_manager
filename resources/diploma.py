@@ -24,10 +24,7 @@ def send_file(filename, login, password, email):
         server.login(msg['From'], password)
         server.sendmail(msg['From'], msg['To'], msg.as_string())
         server.quit()
-        print("Диплом успешно отправлен")
     except Exception as ex:
-        print("Не удалось отправить диплом:")
-        print(ex)
         raise ex
 
 
@@ -58,8 +55,6 @@ def create_diploma(diploma_name = "diploma.pptx", template = "template.pptx", na
                             number = int(reader.read())
                             number = number + 1
                     except Exception as ex:
-                        print("Не удалось получить номер диплома:")
-                        print(ex)
                         raise Exception("Не удалось получить номер диплома")
 
                     if (6 - len(str(number)) >= 0):
@@ -74,16 +69,11 @@ def create_diploma(diploma_name = "diploma.pptx", template = "template.pptx", na
                         with open("number.txt", 'w') as writer:
                             writer.write(str(number))
                     except Exception as ex:
-                        print("Не удалось записать номер диплома:")
-                        print(ex)
                         raise Exception("Не удалось записать номер диплома")
 
         qrcode.make(link).save("qr.png")
         slide.shapes.add_picture("qr.png", left = Inches(3.4), top = Inches(9.06), width = Inches(1), height = Inches(1))
         presentation.save(diploma_name)
         os.system(f"soffice --headless --convert-to pdf {diploma_name}")
-        print("Диплом успешно создан")
     except Exception as ex:
-        print("Не удалось создать диплом:")
-        print(ex)
         raise ex

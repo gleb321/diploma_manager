@@ -15,8 +15,6 @@ def create_db():
                 role text not null
                 )""")
 
-            print("Таблица users успешно создана")
-
             cur.execute("""CREATE TABLE IF NOT EXISTS diplomas (
                 id integer primary key autoincrement,
                 student_email text not null,
@@ -25,8 +23,6 @@ def create_db():
                 hashcode text not null
                 )""")
 
-            print("Таблица diplomas успешно создана")
-
             cur.execute("""CREATE TABLE IF NOT EXISTS students (
                 id integer primary key autoincrement,
                 name text not null,
@@ -34,15 +30,11 @@ def create_db():
                 email text not null
                 )""")
 
-            print("Таблица students успешно создана")
-
             cur.execute("""CREATE TABLE IF NOT EXISTS courses (
                 id integer primary key,
                 name text not null,
                 direction text not null
                 )""")
-
-            print("Таблица courses успешно создана")
 
             cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
                 id integer primary key autoincrement,
@@ -51,12 +43,9 @@ def create_db():
                 date text not null
                 )""")
 
-            print("Таблица transactions успешно создана")
-
             cur.close()
     except Exception as ex:
-        print("Не удалось создать таблицу:")
-        print(ex)
+        raise ex
 
 
 def add_to_db(data, case):
@@ -67,34 +56,19 @@ def add_to_db(data, case):
             if case == "diploma":
                 cur.execute("""INSERT INTO diplomas (student_email, course_id, portfolio, hashcode) 
                     VALUES (?, ?, ?, ?)""", data)
-                print("Данные о запросе успешно сохранены")
             elif case == "transaction":
                 cur.execute("""INSERT INTO transactions (hashcode, transaction_id, date) VALUES (?, ?, ?)""", data)
-                print("Данные о транзакции успешно сохранены")
             elif case == "user":
                 cur.execute("""INSERT INTO users (login, password, role) VALUES (?, ?, ?)""", data)
-                print("Данные о пользователе успешно сохранены")
             elif case == "student":
                 cur.execute("""INSERT INTO students (name, surname, email) VALUES (?, ?, ?)""", data)
-                print("Данные о студенте успешно сохранены")
             elif case == "course":
                 cur.execute("""INSERT INTO courses (id, name, direction) VALUES (?, ?, ?)""", data)
-                print("Данные о курсе успешно сохранены")
             cur.close()
     except Exception as ex:
-        if case == "diploma":
-            print("Не удалось сохранить данные о запросе:")
-        elif case == "transaction":
-            print("Не удалось сохранить данные о транзакции:")
-        elif case == "user":
-            print("Не удалось сохранить данные о пользователе:")
-        elif case == "student":
-            print("Не удалось сохранить данные о студенте:")
-        elif case == "course":
-            print("Не удалось сохранить данные о курсе:")
         if db.locked():
             db.release()
-        print(ex)
+        
         raise ex
 
     if db.locked():
@@ -110,10 +84,9 @@ def get_user_data(login):
             user = tuple(*res)
             cur.close()
     except Exception as ex:
-        print("Не удалось получить данные о пользователе:")
-        print(ex)
         if db.locked():
             db.release()
+
         raise ex   
 
     if db.locked():

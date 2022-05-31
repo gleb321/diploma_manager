@@ -45,11 +45,8 @@ def authorize():
         minutes = 15
         jwt_token = jwt.encode({"sub": "auth", "user": login, "role": user_role, "exp": int(time.time()) + 60 * minutes},
              f"{login}.{password}.{jwt_key}", algorithm="HS256")
-        print("Авторизация прошла успешно")
         return jwt_token
     except Exception as ex:
-        print("Ошибка авторизации:")
-        print(ex)
         return f"Ошибка авторизации:\n{ex}", 404
 
 
@@ -65,8 +62,6 @@ def get_user_diplomas():
 
         return get_diplomas(case = "user", email = login)
     except Exception as ex:
-        print("Не удалось получить информацию о дипломах пользователя:")
-        print(ex)
         return f"Не удалось получить информацию о дипломах пользователя:\n{ex}", 400
 
 
@@ -81,8 +76,6 @@ def get_all_diplomas():
 
         return get_diplomas(case = "all")
     except Exception as ex:
-        print("Не удалось получить информацию о дипломах:")
-        print(ex)
         return f"Не удалось получить информацию о дипломах:\n{ex}", 400
 
 
@@ -97,8 +90,6 @@ def user_info():
 
         return get_user_stats(login)
     except Exception as ex:
-        print("Не удалось получить статистику пользователя:")
-        print(ex)
         return f"Не удалось получить статистику пользователя:\n{ex}", 400
 
 
@@ -113,8 +104,6 @@ def diploma_info():
 
         return get_diploma_info(login, id)
     except Exception as ex:
-        print("Не удалось получить информацию о дипломе:")
-        print(ex)
         return f"Не удалось получить информацию о дипломе:\n{ex}", 400
 
 
@@ -129,19 +118,14 @@ def create_and_send_diploma():
 
         data = dict(request.get_json())
         date = datetime.now(pytz.timezone('Europe/Moscow')).date()
-        print(data)
-        print("Получен новый запрос")
         string_to_hash = f'{data["name"]}_{data["surname"]}_{data["course_id"]}'
         hashcode = hashlib.sha256(string_to_hash.encode()).hexdigest()
         link = create_transaction(data["name"], data["surname"], data["course_id"], date.strftime("%d/%m/%Y"), hashcode, waves_private_key)
         create_diploma(name = data["name"], surname = data["surname"], course = data["course"], date = date.strftime("%d.%m.%Y"), link = link)
         add_to_db((data["email"], data["course_id"], data["portfolio"], hashcode), "diploma")
         send_file(filename = "diploma.pdf", login = gmail_login, password = gmail_password, email = data["email"])
-        print("Запрос успешно обработан")
         return "Запрос успешно обработан"
     except Exception as ex:
-        print("Не удалось обработать запрос:")
-        print(ex)
         return f"Не удалось обработать запрос:\n{ex}", 400
 
 

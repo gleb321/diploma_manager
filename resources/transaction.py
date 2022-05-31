@@ -6,10 +6,7 @@ def create_transaction(name, surname, course_id, date, hashcode, private_key):
         myAddress = pw.Address(privateKey = private_key)
         data = [{'type': 'string', 'key': 'hashcode', 'value': hashcode}]
         transaction = myAddress.dataTransaction(data)
-        print("Транзакция успешно совершена")
     except Exception as ex:
-        print("Не удалось совершить транзакцию:")
-        print(ex)
         raise ex
 
     add_to_db((hashcode, transaction['id'], date), 'transaction')
